@@ -1,0 +1,18 @@
+# Strava Access Token.
+access_token: replace_with_your_access_token
+
+# Folder for results files.
+dir_result: history
+
+# Logger level. [FATAL, ERROR, WARN, INFO, DEBUG]
+log_level: INFO
+
+# Maximum Best Efforts Level to fetch.
+# Note that at this stage,
+# this web application only supports visualize the best effort only.
+# Fetching 2nd or 3rd best efforts won't be visualized
+# and will cause large amount of unneccessary API calls.
+# 1 - Best Effort Only
+# 2 - 1st and 2nd Best Effort
+# 3 - 1st, 2nd and 3rd Best Effort
+maximum_pr_rank: 1
