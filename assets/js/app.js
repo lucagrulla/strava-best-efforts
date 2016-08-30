@@ -128,8 +128,8 @@ function createBestEffortTable(distancesToShow, totalItems, isOverview) {
 
     // Add a warning message when there is no content.
     if ($('#main-content').is(':empty')) {
-      var message = "<div class='alert alert-warning col-md-8 col-md-offset-2'>"
-        + "<h4><i class='icon fa fa-warning'></i>Nothing here. Get out and run!</h4>";
+      var message = "<div class='alert alert-info col-md-8 col-md-offset-2'>"
+        + "<h4><i class='icon fa fa-info'></i> Nothing here. Get out and run!</h4>";
       $('#main-content').append(message);
     }
   });

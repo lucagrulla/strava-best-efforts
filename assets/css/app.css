@@ -74,11 +74,13 @@
 
 #main-content .best-effort-table a:hover,
 #main-content .best-effort-table a:focus {
-  color: #fc4c02;
+  color: #FC4C02;
   border-bottom-color: #FC4C02;
 }
 /* Style alerts in main-content */
-#main-content .alert {
+#main-content .alert-info {
+  background-color: #FC4C02 !important;
+  border-color: #FC4C02 !important;
   margin-top: 30px;
 }
 #main-content .alert h4 {
