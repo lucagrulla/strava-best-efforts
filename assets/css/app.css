@@ -77,6 +77,13 @@
   color: #fc4c02;
   border-bottom-color: #FC4C02;
 }
+/* Style alerts in main-content */
+#main-content .alert {
+  margin-top: 30px;
+}
+#main-content .alert h4 {
+  margin-bottom: 0;
+}
 
 /* Add box shadow to treeview menu items */
 .treeview-menu li a:hover {

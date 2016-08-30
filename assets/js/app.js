@@ -109,7 +109,7 @@ function createBestEffortTable(distancesToShow, totalItems, isOverview) {
       // create the best efforts table for this distance.
       if (bestEffortsForThisDistance.length > 0 && distancesToShow.indexOf(distance) !== -1) {
         var table = constructBestEffortTableHtml(distance, bestEffortsForThisDistance, totalItems, isOverview);
-        $('#main-content').append(table).fadeIn(1000);
+        $('#main-content').append(table);
       }
     });
   }).done(function() {
@@ -125,6 +125,13 @@ function createBestEffortTable(distancesToShow, totalItems, isOverview) {
         ]
       });
     });
+
+    // Add a warning message when there is no content.
+    if ($('#main-content').is(':empty')) {
+      var message = "<div class='alert alert-warning col-md-8 col-md-offset-2'>"
+        + "<h4><i class='icon fa fa-warning'></i>Nothing here. Get out and run!</h4>";
+      $('#main-content').append(message);
+    }
   });
 }
 
