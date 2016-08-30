@@ -60,8 +60,7 @@ function createAthleteInfo() {
     $('.athlete-location').text(location);
 
     // Athlete Profile Picture.
-    var profile_picture = athleteInfo['profile_medium'];
-    $('.athlete-image').attr('src', profile_picture);
+    $('.athlete-image').attr('src', athleteInfo['profile']);
 
     // Following.
     var friend_count = athleteInfo['friend_count'];
