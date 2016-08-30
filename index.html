@@ -56,7 +56,7 @@
             <!-- User Account: style can be found in dropdown.less -->
             <li class="dropdown user user-menu">
               <a class="dropdown-toggle" data-toggle="dropdown" href="#">
-                <img alt="User Image" class="athlete-image user-image" src="assets/img/strava-profile.png">
+                <img alt="User Image" class="athlete-image user-image" data-failover="assets/img/strava-profile.png" src="assets/img/strava-profile.png">
                 <span class="hidden-xs athlete-name">John Smith</span>
               </a>
 
@@ -64,7 +64,7 @@
                 <!-- User image -->
                 <li class="user-header">
                   <a class="athlete-link" href="https://www.strava.com/" target="_blank">
-                    <img alt="User Image" class="athlete-image img-circle" src="assets/img/strava-profile.png">
+                    <img alt="User Image" class="athlete-image img-circle" data-failover="assets/img/strava-profile.png" src="assets/img/strava-profile.png">
                   </a>
                   <p><span class="athlete-name">John Smith<span></p>
                   <p><small class="athlete-location">CityName, CountryName</small></p>
@@ -101,7 +101,7 @@
         <div class="user-panel"><!-- Sidebar user panel -->
           <div class="pull-left image">
             <a class="athlete-link" href="https://www.strava.com/" target="_blank">
-              <img alt="User Image" class="athlete-image img-circle" src="assets/img/strava-profile.png">
+              <img alt="User Image" class="athlete-image img-circle" data-failover="assets/img/strava-profile.png" src="assets/img/strava-profile.png">
             </a>
           </div>
 
@@ -303,6 +303,12 @@
   $("a[id^='best-effort-']").dblclick(function(e) {
     e.preventDefault();
   })
+  $('img[data-failover]').error(function(){
+    var failover = $(this).data('failover');
+    if (this.src != failover){
+      this.src = failover;
+    }
+  });
   </script>
 </body>
 </html>
