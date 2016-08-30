@@ -18,9 +18,10 @@ function prepareDistanceView(distanceText, sidebarAnchor) {
 
   // Update content header and breadcrumb.
   var transitionTime = 100;
-  $(".content-header h1").text("Best Efforts for " + distanceText);
+  var headerText = "Best Efforts for " + distanceText;
+  $(".content-header h1").text(headerText);
   $(".content-header .breadcrumb li.active").fadeOut(transitionTime, function() {
-    $(this).text(distanceText).fadeIn(transitionTime);
+    $(this).text(headerText).fadeIn(transitionTime);
   });
 
   // Update page title.
