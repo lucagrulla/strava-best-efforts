@@ -192,7 +192,40 @@ body:not(.pace-done) > :not(.pace),body:not(.pace-done):before,body:not(.pace-do
     }
 }
 
+/* Badge and label styles */
 .badge,
 .label {
   font-size: 12px;
+}
+
+.hr-zone-na {
+  background-color: #D2D6DE; // Gray.
+}
+.hr-zone-1 {
+  background-color: #A0A0A0; // Dark Gray.
+}
+.hr-zone-2 {
+  background-color: #00A65A; // Green.
+}
+.hr-zone-3 {
+  background-color: #F39C12; // Yellow.
+}
+.hr-zone-4 {
+  background-color: #FF851B; // Orange.
+}
+.hr-zone-5 {
+  background-color: #F56954; // Red.
+}
+.hr-zone-6 {
+  background-color: #DD4B39; // Dark Red.
+}
+.hr-zone-7 {
+  background-color: #001F3F; // Navy.
+}
+.hr-zone-8 {
+  background-color: #222222; // Black.
+}
+.light-color-zone {
+  opacity: .75;
+  filter: alpha(opacity=75);
 }
