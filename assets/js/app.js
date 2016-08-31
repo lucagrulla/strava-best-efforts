@@ -18,9 +18,10 @@ function prepareDistanceView(distanceText, sidebarAnchor) {
 
   // Update content header and breadcrumb.
   var transitionTime = 100;
-  $(".content-header h1").text("Best Efforts for " + distanceText);
+  var headerText = "Best Efforts for " + distanceText;
+  $(".content-header h1").text(headerText);
   $(".content-header .breadcrumb li.active").fadeOut(transitionTime, function() {
-    $(this).text(distanceText).fadeIn(transitionTime);
+    $(this).text(headerText).fadeIn(transitionTime);
   });
 
   // Update page title.
@@ -109,7 +110,7 @@ function createBestEffortTable(distancesToShow, totalItems, isOverview) {
       // create the best efforts table for this distance.
       if (bestEffortsForThisDistance.length > 0 && distancesToShow.indexOf(distance) !== -1) {
         var table = constructBestEffortTableHtml(distance, bestEffortsForThisDistance, totalItems, isOverview);
-        $('#main-content').append(table).fadeIn(1000);
+        $('#main-content').append(table);
       }
     });
   }).done(function() {
@@ -125,6 +126,13 @@ function createBestEffortTable(distancesToShow, totalItems, isOverview) {
         ]
       });
     });
+
+    // Add a warning message when there is no content.
+    if ($('#main-content').is(':empty')) {
+      var message = "<div class='alert alert-info col-md-8 col-md-offset-2'>"
+        + "<h4><i class='icon fa fa-info'></i> Nothing here. Get out and run!</h4>";
+      $('#main-content').append(message);
+    }
   });
 }
 
