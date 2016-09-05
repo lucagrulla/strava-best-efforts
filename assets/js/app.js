@@ -212,25 +212,41 @@ function createWorkoutTypeBadge(workoutType) {
 
 /* Create HR badge <span> based on my reserve HR zones. TODO: Need extend to get custom zones. */
 function createHeartRateBadge(heartRate) {
-  var badgeColor = "grey";
+  var hrZoneClass = "hr-zone-na";
   if (heartRate === 0) {
     heartRate = "n/a";
   }
-  if (heartRate < 163) {
-    badgeColor = "green";
+  if (heartRate < 130) {
+    hrZoneClass = "hr-zone-1 light-color-zone";
   }
-  if (heartRate > 163 && heartRate <= 169) {
-    badgeColor = "yellow";
-  } else if (heartRate > 169 && heartRate <= 176) {
-    badgeColor = "orange";
-  } else if (heartRate > 176 && heartRate <= 182) {
-    badgeColor = "red";
-  } else if (heartRate > 182 && heartRate <= 189) {
-    badgeColor = "purple";
-  } else if (heartRate > 189) {
-    badgeColor = "black";
+  else if (heartRate > 130 && heartRate <= 143) { // HRR 50% - 60%
+    hrZoneClass = "hr-zone-1";
   }
-  return "<span class='badge bg-" + badgeColor + "'>" + heartRate + "</span>";
+  else if (heartRate > 143 && heartRate <= 156) { // HRR 60% - 70%
+    hrZoneClass = "hr-zone-2 light-color-zone";
+  }
+  else if (heartRate > 156 && heartRate <= 163) { // HRR 70% - 75%
+    hrZoneClass = "hr-zone-2";
+  }
+  else if (heartRate > 163 && heartRate <= 169) { // HRR 75% - 80%
+    hrZoneClass = "hr-zone-3";
+  }
+  else if (heartRate > 169 && heartRate <= 176) { // HRR 80% - 85%
+    hrZoneClass = "hr-zone-4";
+  }
+  else if (heartRate > 176 && heartRate <= 182) { // HRR 85% - 90%
+    hrZoneClass = "hr-zone-5";
+  }
+  else if (heartRate > 182 && heartRate <= 189) { // HRR 90% - 95%
+    hrZoneClass = "hr-zone-6";
+  }
+  else if (heartRate > 189 && heartRate <= 195) { // HRR 95% - 100%
+    hrZoneClass = "hr-zone-7";
+  }
+  else if (heartRate > 195) { // HRR 100%
+    hrZoneClass = "hr-zone-8";
+  }
+  return "<span class='badge " + hrZoneClass + "'>" + heartRate + "</span>";
 }
 
 /* Extension method to convert a number into time format. */
