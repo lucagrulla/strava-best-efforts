@@ -229,3 +229,15 @@ body:not(.pace-done) > :not(.pace),body:not(.pace-done):before,body:not(.pace-do
   opacity: .75;
   filter: alpha(opacity=75);
 }
+.workout-type-run {
+  background-color: #00A65A; // Green.
+}
+.workout-type-race {
+  background-color: #F56954; // Red.
+}
+.workout-type-long-run {
+  background-color: #00A65A; // Green.
+}
+.workout-type-workout {
+  background-color: #F39C12; // Yellow.
+}
