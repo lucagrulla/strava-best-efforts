@@ -145,16 +145,49 @@ function createMainContent(distancesToShow, maxItemsAllowed, isOverview) {
           $('#main-content').append(progressionChart);
           createProgressionChart(distance, bestEffortsForThisDistance);
         }
+
         var table = constructBestEffortTableHtml(distance, bestEffortsForThisDistance, maxItemsAllowed, isOverview);
         $('#main-content').append(table);
+
+        if (!isOverview) {
+          var pieCharts = constructPieChartsHtml();
+          $('#main-content').append(pieCharts);
+          createWorkoutTypeChart(distance, bestEffortsForThisDistance);
+          createGearChart(distance, bestEffortsForThisDistance);
+        }
       }
     });
   });
 }
 
+function constructPieChartsHtml() {
+  var chart = "<div class='row'>"
+
+  chart += "<div class='col-md-6'>"
+  chart += "<div class='box'>"
+  chart += "<div class='box-header with-border>"
+  chart += "<i class='fa fa-bar-chart-o'></i><h3 class='box-title'>Workout Type Chart</h3>";
+  chart += "<div class='box-body'>";
+  chart += "<div class='chart'>";
+  chart += "<canvas id='workout-type-chart'></canvas>";
+  chart += "</div></div></div></div></div>"
+
+  chart += "<div class='col-md-6'>"
+  chart += "<div class='box'>"
+  chart += "<div class='box-header with-border>"
+  chart += "<i class='fa fa-bar-chart-o'></i><h3 class='box-title'>Gear Chart</h3>";
+  chart += "<div class='box-body'>";
+  chart += "<div class='chart'>";
+  chart += "<canvas id='gear-chart'></canvas>";
+  chart += "</div></div></div></div></div>"
+
+  chart += "</div>";
+  return chart;
+}
+
 function constructProgressionChartHtml() {
   var chart = "<div class='row'><div class='col-xs-12'>"
-  chart += "<div class='box box-primary'>"
+  chart += "<div class='box'>"
   chart += "<div class='box-header with-border>"
   chart += "<i class='fa fa-bar-chart-o'></i><h3 class='box-title'>Progression Chart</h3>";
   chart += "<div class='box-body'>";
@@ -314,6 +347,123 @@ function constructBestEffortTableHtml(distance, bestEfforts, maxItemsAllowed, is
   return table;
 }
 
+function createWorkoutTypeChart(distance, bestEfforts) {
+  var workoutTypes = {}; // Holds Workout Type and its count.
+  bestEfforts.forEach(function(bestEffort) {
+    var workoutType = bestEffort["workout_type"];
+
+    // No workout type is a normal run.
+    if (workoutType == null) {
+      workoutType = 0;
+    }
+
+    if (workoutType in workoutTypes) {
+      workoutTypes[workoutType] += 1;
+    } else {
+      workoutTypes[workoutType] = 1;
+    }
+  });
+
+  var ctx = $("#workout-type-chart").get(0).getContext("2d");
+  ctx.canvas.height = 300;
+
+  var data = {
+      labels: [
+          "Run",
+          "Race",
+          "Long Run",
+          "Workout"
+      ],
+      datasets: [
+      {
+          data: [workoutTypes[0], workoutTypes[1], workoutTypes[2], workoutTypes[3]],
+          backgroundColor: [
+              "rgba(189, 214, 186, 0.7)",
+              "rgba(245, 105, 84, 0.7)",
+              "rgba(0, 166, 90, 0.7)",
+              "rgba(243, 156, 18, 0.7)"
+          ],
+          hoverBackgroundColor: [
+              "rgba(189, 214, 186, 1)",
+              "rgba(245, 105, 84, 1)",
+              "rgba(0, 166, 90, 1)",
+              "rgba(243, 156, 18, 1)"
+          ]
+      }]
+  };
+
+  var chart = new Chart(ctx, {
+    type: 'pie',
+    data: data,
+    options: {
+      legend: {
+        position: 'bottom',
+        onClick: function (e) {
+          e.stopPropagation();
+        }
+      },
+      responsive: true,
+      maintainAspectRatio: false
+    }
+  });
+}
+
+function createGearChart(distance, bestEfforts) {
+  var gears = {}; // Holds Workout Type and its count.
+  bestEfforts.forEach(function(bestEffort) {
+    var gearName = 'n/a';
+    if (bestEffort['gear_name']) {
+      gearName = bestEffort['gear_name'];
+    }
+
+    if (gearName in gears) {
+      gears[gearName] += 1;
+    } else {
+      gears[gearName] = 1;
+    }
+  });
+
+  var ctx = $("#gear-chart").get(0).getContext("2d");
+  ctx.canvas.height = 300;
+
+  var gearLabels = Object.keys(gears);
+  var gearCount = Object.values(gears);
+  var data = {
+      labels: gearLabels,
+      datasets: [
+      {
+          data: gearCount,
+          backgroundColor: [
+              "rgba(189, 214, 186, 0.7)",
+              "rgba(245, 105, 84, 0.7)",
+              "rgba(0, 166, 90, 0.7)",
+              "rgba(243, 156, 18, 0.7)"
+          ],
+          hoverBackgroundColor: [
+              "rgba(189, 214, 186, 1)",
+              "rgba(245, 105, 84, 1)",
+              "rgba(0, 166, 90, 1)",
+              "rgba(243, 156, 18, 1)"
+          ]
+      }]
+  };
+
+  var chart = new Chart(ctx, {
+    type: 'pie',
+    data: data,
+    options: {
+      legend: {
+        position: 'bottom',
+        onClick: function (e) {
+          e.stopPropagation();
+        }
+      },
+      responsive: true,
+      maintainAspectRatio: false
+    }
+  });
+}
+
 /* Create Strava Workout Type badge <span>. Run, Race, Long Run and Workout. */
 function createWorkoutTypeBadge(workoutType) {
   var workoutTypeClass = "run light-color-zone";
@@ -391,4 +541,14 @@ String.prototype.toHHMMSS = function() {
 
   var time = hours + ':' + minutes + ':' + seconds;
   return time;
+}
+
+/* Get a random colour. */
+function getRandomColor() {
+  var letters = '0123456789ABCDEF'.split('');
+  var color = '#';
+  for (var i = 0; i < 6; i++ ) {
+      color += letters[Math.floor(Math.random() * 16)];
+  }
+  return color;
 }
