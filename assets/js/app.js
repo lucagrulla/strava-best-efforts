@@ -427,7 +427,11 @@ function createGearChart(distance, bestEfforts) {
   ctx.canvas.height = 300;
 
   var gearLabels = Object.keys(gears);
-  var gearCount = Object.values(gears);
+  var gearCount = [];
+  for(var key in gears) {
+    var value = gears[key];
+    gearCount.push(value);
+  }
   var data = {
       labels: gearLabels,
       datasets: [
