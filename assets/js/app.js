@@ -165,6 +165,7 @@ function constructProgressionChartHtml() {
 }
 
 function createProgressionChart(distance, bestEfforts) {
+  var distanceName = distance.replace(/-/g, ' ');
   var dates = [];
   var runTimes = [];
   var runTimeLabels = [];
@@ -186,7 +187,7 @@ function createProgressionChart(distance, bestEfforts) {
     labels: dates,
     datasets: [
       {
-        label: "Best Efforts for "+ distance,
+        label: "Best Efforts for " + distanceName,
         fill: false,
         lineTension: 0,
         backgroundColor: "rgba(75,192,192,0.4)",
@@ -245,7 +246,7 @@ function createProgressionChart(distance, bestEfforts) {
         mode: 'single',
         callbacks: {
           title: function(tooltipItem, data) {
-            return "Best Effort for " + distance;
+            return "Best Effort for " + distanceName;
           },
           label: function(tooltipItem, data) {
             var text = "Ran " + tooltipItem.yLabel.toString().toHHMMSS();
