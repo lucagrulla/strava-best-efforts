@@ -2,7 +2,27 @@ function loadDistanceView(sidebarAnchor) {
   var distanceText = sidebarAnchor.attr("data-distance-text");
   var distanceName = sidebarAnchor.attr("data-distance-name");
   prepareDistanceView(distanceText, sidebarAnchor);
-  createBestEffortTable([distanceName], Number.MAX_VALUE, false);
+  createMainContent([distanceName], Number.MAX_VALUE, false);
+
+  // Add a warning message when there is no content.
+  if ($('#main-content').is(':empty')) {
+    var message = "<div class='alert alert-info col-md-8 col-md-offset-2'>"
+      + "<h4><i class='icon fa fa-info'></i> Nothing here. Get out and run!</h4>";
+    $('#main-content').append(message);
+  } else {
+    $(".best-effort-table.datatable").each(function() {
+      $(this).DataTable({
+        "columnDefs": [{
+            "targets": [1, 3, 5, 6], // Disable searching for WorkoutType, Time and HRs.
+            "searchable": false
+          }],
+        "iDisplayLength": 10,
+        "order": [
+          [0, "desc"]
+        ]
+      });
+    });
+  }
 }
 
 function prepareDistanceView(distanceText, sidebarAnchor) {
@@ -35,7 +55,7 @@ function loadOverview() {
   var distancesToShow = ['Marathon', 'Half-Marathon', '10k', '5k', '1 mile', '1k'];
   var limitPerDistance = 3;
   createAthleteInfo();
-  createBestEffortTable(distancesToShow, limitPerDistance, true);
+  createMainContent(distancesToShow, limitPerDistance, true);
 }
 
 function createAthleteInfo() {
@@ -77,7 +97,7 @@ function createAthleteInfo() {
   });
 }
 
-function createBestEffortTable(distancesToShow, totalItems, isOverview) {
+function createMainContent(distancesToShow, maxItemsAllowed, isOverview) {
   var allDistances = ['50k', 'Marathon', '30k', 'Half-Marathon', '20k', '10 mile', '15k', '10k', '5k', '2 mile',
     '1 mile', '1k', '1/2 mile', '400m'
   ];
@@ -109,34 +129,16 @@ function createBestEffortTable(distancesToShow, totalItems, isOverview) {
       // and it's one of those distances to be shown on overview page,
       // create the best efforts table for this distance.
       if (bestEffortsForThisDistance.length > 0 && distancesToShow.indexOf(distance) !== -1) {
-        var table = constructBestEffortTableHtml(distance, bestEffortsForThisDistance, totalItems, isOverview);
+        var table = constructBestEffortTableHtml(distance, bestEffortsForThisDistance, maxItemsAllowed, isOverview);
         $('#main-content').append(table);
       }
     });
   }).done(function() {
-    $(".best-effort-table.datatable").each(function() {
-      $(this).DataTable({
-        "columnDefs": [{
-            "targets": [1, 3, 5, 6], // Disable searching for WorkoutType, Time and HRs.
-            "searchable": false
-          }],
-        "iDisplayLength": 10,
-        "order": [
-          [0, "desc"]
-        ]
-      });
-    });
 
-    // Add a warning message when there is no content.
-    if ($('#main-content').is(':empty')) {
-      var message = "<div class='alert alert-info col-md-8 col-md-offset-2'>"
-        + "<h4><i class='icon fa fa-info'></i> Nothing here. Get out and run!</h4>";
-      $('#main-content').append(message);
-    }
   });
 }
 
-function constructBestEffortTableHtml(distance, bestEfforts, totalItems, isOverview) {
+function constructBestEffortTableHtml(distance, bestEfforts, maxItemsAllowed, isOverview) {
   var distanceName = distance.replace(/-/g, ' ');
 
   var table = "<div class='row'><div class='col-xs-12'><div class='box'>"
@@ -158,7 +160,7 @@ function constructBestEffortTableHtml(distance, bestEfforts, totalItems, isOverv
   table += "<tbody>";
 
   // Take only the fastest three for Overview page.
-  bestEfforts.reverse().slice(0, totalItems).forEach(function(bestEffort) {
+  bestEfforts.reverse().slice(0, maxItemsAllowed).forEach(function(bestEffort) {
     table += "<tr>";
     table += "<td>" + bestEffort["start_date"].slice(0, 10); + "</td>";
     table += "<td class='text-center badge-cell'>" + createWorkoutTypeBadge(bestEffort["workout_type"]) + "</td>";

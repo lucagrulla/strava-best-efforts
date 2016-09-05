@@ -291,6 +291,11 @@
     enableControlSidebar: false,
     enableFastclick: true,
   };
+
+  // Set the global configs to synchronous.
+  $.ajaxSetup({
+      async: false
+  });
   $(document).ready(function() {
     loadOverview();
   });
