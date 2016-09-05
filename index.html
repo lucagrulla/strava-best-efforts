@@ -269,6 +269,13 @@
   <!-- DataTables Bootstrap -->
   <script src="assets/AdminLTE/plugins/datatables/dataTables.bootstrap.min.js"></script>
 
+  <!-- ChartJS 2.2.2 and Moment.js 2.14.1 -->
+  <script src="//cdnjs.cloudflare.com/ajax/libs/moment.js/2.14.1/moment.min.js"></script>
+  <script>window.moment || document.write('<script src="assets/js/moment.min.js"><\/script>')</script>
+
+  <script src="//cdnjs.cloudflare.com/ajax/libs/Chart.js/2.2.2/Chart.min.js"></script>
+  <script>window.Chart || document.write('<script src="assets/js/Chart.min.js"><\/script>')</script>
+
   <!-- FastClick -->
   <script src="assets/AdminLTE/plugins/fastclick/fastclick.min.js"></script>
 
@@ -291,6 +298,7 @@
     enableControlSidebar: false,
     enableFastclick: true,
   };
+
   $(document).ready(function() {
     loadOverview();
   });

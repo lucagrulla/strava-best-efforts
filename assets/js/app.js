@@ -1,8 +1,39 @@
 function loadDistanceView(sidebarAnchor) {
+
+  // Set the global configs to synchronous.
+  $.ajaxSetup({
+      async: false
+  });
+
   var distanceText = sidebarAnchor.attr("data-distance-text");
   var distanceName = sidebarAnchor.attr("data-distance-name");
   prepareDistanceView(distanceText, sidebarAnchor);
-  createBestEffortTable([distanceName], Number.MAX_VALUE, false);
+  createMainContent([distanceName], Number.MAX_VALUE, false);
+
+  // Add a warning message when there is no content.
+  if ($('#main-content').is(':empty')) {
+    var message = "<div class='alert alert-info col-md-8 col-md-offset-2'>"
+      + "<h4><i class='icon fa fa-info'></i> Nothing here. Get out and run!</h4>";
+    $('#main-content').append(message);
+  } else {
+    $(".best-effort-table.datatable").each(function() {
+      $(this).DataTable({
+        "columnDefs": [{
+            "targets": [1, 3, 5, 6], // Disable searching for WorkoutType, Time and HRs.
+            "searchable": false
+          }],
+        "iDisplayLength": 10,
+        "order": [
+          [0, "desc"]
+        ]
+      });
+    });
+  }
+
+  // Set JS back to asynchronous mode.
+  $.ajaxSetup({
+      async: true
+  });
 }
 
 function prepareDistanceView(distanceText, sidebarAnchor) {
@@ -35,7 +66,7 @@ function loadOverview() {
   var distancesToShow = ['Marathon', 'Half-Marathon', '10k', '5k', '1 mile', '1k'];
   var limitPerDistance = 3;
   createAthleteInfo();
-  createBestEffortTable(distancesToShow, limitPerDistance, true);
+  createMainContent(distancesToShow, limitPerDistance, true);
 }
 
 function createAthleteInfo() {
@@ -77,7 +108,7 @@ function createAthleteInfo() {
   });
 }
 
-function createBestEffortTable(distancesToShow, totalItems, isOverview) {
+function createMainContent(distancesToShow, maxItemsAllowed, isOverview) {
   var allDistances = ['50k', 'Marathon', '30k', 'Half-Marathon', '20k', '10 mile', '15k', '10k', '5k', '2 mile',
     '1 mile', '1k', '1/2 mile', '400m'
   ];
@@ -109,34 +140,159 @@ function createBestEffortTable(distancesToShow, totalItems, isOverview) {
       // and it's one of those distances to be shown on overview page,
       // create the best efforts table for this distance.
       if (bestEffortsForThisDistance.length > 0 && distancesToShow.indexOf(distance) !== -1) {
-        var table = constructBestEffortTableHtml(distance, bestEffortsForThisDistance, totalItems, isOverview);
+        if (!isOverview) {
+          var progressionChart = constructProgressionChartHtml();
+          $('#main-content').append(progressionChart);
+          createProgressionChart(distance, bestEffortsForThisDistance);
+        }
+
+        var table = constructBestEffortTableHtml(distance, bestEffortsForThisDistance, maxItemsAllowed, isOverview);
         $('#main-content').append(table);
+
+        if (!isOverview) {
+          var pieCharts = constructPieChartsHtml();
+          $('#main-content').append(pieCharts);
+          createWorkoutTypeChart(distance, bestEffortsForThisDistance);
+          createGearChart(distance, bestEffortsForThisDistance);
+        }
       }
     });
-  }).done(function() {
-    $(".best-effort-table.datatable").each(function() {
-      $(this).DataTable({
-        "columnDefs": [{
-            "targets": [1, 3, 5, 6], // Disable searching for WorkoutType, Time and HRs.
-            "searchable": false
-          }],
-        "iDisplayLength": 10,
-        "order": [
-          [0, "desc"]
-        ]
-      });
-    });
+  });
+}
 
-    // Add a warning message when there is no content.
-    if ($('#main-content').is(':empty')) {
-      var message = "<div class='alert alert-info col-md-8 col-md-offset-2'>"
-        + "<h4><i class='icon fa fa-info'></i> Nothing here. Get out and run!</h4>";
-      $('#main-content').append(message);
+function constructPieChartsHtml() {
+  var chart = "<div class='row'>"
+
+  chart += "<div class='col-md-6'>"
+  chart += "<div class='box'>"
+  chart += "<div class='box-header with-border>"
+  chart += "<i class='fa fa-bar-chart-o'></i><h3 class='box-title'>Workout Type Chart</h3>";
+  chart += "<div class='box-body'>";
+  chart += "<div class='chart'>";
+  chart += "<canvas id='workout-type-chart'></canvas>";
+  chart += "</div></div></div></div></div>"
+
+  chart += "<div class='col-md-6'>"
+  chart += "<div class='box'>"
+  chart += "<div class='box-header with-border>"
+  chart += "<i class='fa fa-bar-chart-o'></i><h3 class='box-title'>Gear Chart</h3>";
+  chart += "<div class='box-body'>";
+  chart += "<div class='chart'>";
+  chart += "<canvas id='gear-chart'></canvas>";
+  chart += "</div></div></div></div></div>"
+
+  chart += "</div>";
+  return chart;
+}
+
+function constructProgressionChartHtml() {
+  var chart = "<div class='row'><div class='col-xs-12'>"
+  chart += "<div class='box'>"
+  chart += "<div class='box-header with-border>"
+  chart += "<i class='fa fa-bar-chart-o'></i><h3 class='box-title'>Progression Chart</h3>";
+  chart += "<div class='box-body'>";
+  chart += "<div class='chart'>";
+  chart += "<canvas id='progression-chart'></canvas>";
+  chart += "</div></div></div></div></div>";
+  return chart;
+}
+
+function createProgressionChart(distance, bestEfforts) {
+  var distanceName = distance.replace(/-/g, ' ');
+  var dates = [];
+  var runTimes = [];
+  var runTimeLabels = [];
+
+  bestEfforts.forEach(function(bestEffort) {
+    var date = bestEffort["start_date"].slice(0, 10);
+    var runTime = bestEffort['elapsed_time'];
+    var runTimeLabel = bestEffort["elapsed_time"].toString().toHHMMSS();
+    dates.push(date);
+    runTimes.push(runTime);
+    runTimeLabels.push(runTimeLabel);
+  });
+
+  var ctx = $("#progression-chart").get(0).getContext("2d");
+  ctx.canvas.height = 300;
+
+  var data = {
+    yLabels: runTimeLabels,
+    labels: dates,
+    datasets: [
+      {
+        label: "Best Efforts for " + distanceName,
+        fill: false,
+        lineTension: 0,
+        backgroundColor: "rgba(75,192,192,0.4)",
+        borderColor: "#FC4C02",
+        borderCapStyle: 'butt',
+        borderDash: [],
+        borderDashOffset: 0.0,
+        borderJoinStyle: 'miter',
+        pointBorderColor: "#FC4C02",
+        pointBackgroundColor: "#fff",
+        pointBorderWidth: 1,
+        pointHoverRadius: 5,
+        pointHoverBackgroundColor: "#FC4C02",
+        pointHoverBorderColor: "#E34402",
+        pointHoverBorderWidth: 2,
+        pointRadius: 4,
+        pointHitRadius: 10,
+        data: runTimes,
+        spanGaps: false
+      }
+    ]
+  };
+  var myLineChart = new Chart(ctx, {
+    type: 'line',
+    data: data,
+    options: {
+      legend: {
+        display: false
+      },
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        xAxes: [{
+            gridLines: {
+                display: false
+            },
+            type: 'time',
+            time: {
+                unit: 'month'
+            }
+        }],
+        yAxes: [{
+          gridLines: {
+              display: true,
+              offsetGridLines: true
+          },
+          ticks: {
+            callback: function(value, index, values) {
+                return value.toString().toHHMMSS();
+            }
+          }
+        }]
+      },
+      tooltips: {
+        enabled: true,
+        mode: 'single',
+        callbacks: {
+          title: function(tooltipItem, data) {
+            return "Best Effort for " + distanceName;
+          },
+          label: function(tooltipItem, data) {
+            var text = "Ran " + tooltipItem.yLabel.toString().toHHMMSS();
+            text += " on " + tooltipItem.xLabel;
+            return text;
+          }
+        }
+      }
     }
   });
 }
 
-function constructBestEffortTableHtml(distance, bestEfforts, totalItems, isOverview) {
+function constructBestEffortTableHtml(distance, bestEfforts, maxItemsAllowed, isOverview) {
   var distanceName = distance.replace(/-/g, ' ');
 
   var table = "<div class='row'><div class='col-xs-12'><div class='box'>"
@@ -158,9 +314,9 @@ function constructBestEffortTableHtml(distance, bestEfforts, totalItems, isOverv
   table += "<tbody>";
 
   // Take only the fastest three for Overview page.
-  bestEfforts.reverse().slice(0, totalItems).forEach(function(bestEffort) {
+  bestEfforts.reverse().slice(0, maxItemsAllowed).forEach(function(bestEffort) {
     table += "<tr>";
-    table += "<td>" + bestEffort["start_date"].slice(0, 10); + "</td>";
+    table += "<td>" + bestEffort["start_date"].slice(0, 10) + "</td>";
     table += "<td class='text-center badge-cell'>" + createWorkoutTypeBadge(bestEffort["workout_type"]) + "</td>";
     table += "<td>" + "<a href='https://www.strava.com/activities/" + bestEffort['activity_id'] +
       "' target='_blank'>" + bestEffort['activity_name'] + "</a>" + "</td>";
@@ -189,6 +345,127 @@ function constructBestEffortTableHtml(distance, bestEfforts, totalItems, isOverv
   table += "</table>";
   table += "</div></div></div></div>";
   return table;
+}
+
+function createWorkoutTypeChart(distance, bestEfforts) {
+  var workoutTypes = {}; // Holds Workout Type and its count.
+  bestEfforts.forEach(function(bestEffort) {
+    var workoutType = bestEffort["workout_type"];
+
+    // No workout type is a normal run.
+    if (workoutType == null) {
+      workoutType = 0;
+    }
+
+    if (workoutType in workoutTypes) {
+      workoutTypes[workoutType] += 1;
+    } else {
+      workoutTypes[workoutType] = 1;
+    }
+  });
+
+  var ctx = $("#workout-type-chart").get(0).getContext("2d");
+  ctx.canvas.height = 300;
+
+  var data = {
+      labels: [
+          "Run",
+          "Race",
+          "Long Run",
+          "Workout"
+      ],
+      datasets: [
+      {
+          data: [workoutTypes[0], workoutTypes[1], workoutTypes[2], workoutTypes[3]],
+          backgroundColor: [
+              "rgba(189, 214, 186, 0.7)",
+              "rgba(245, 105, 84, 0.7)",
+              "rgba(0, 166, 90, 0.7)",
+              "rgba(243, 156, 18, 0.7)"
+          ],
+          hoverBackgroundColor: [
+              "rgba(189, 214, 186, 1)",
+              "rgba(245, 105, 84, 1)",
+              "rgba(0, 166, 90, 1)",
+              "rgba(243, 156, 18, 1)"
+          ]
+      }]
+  };
+
+  var chart = new Chart(ctx, {
+    type: 'pie',
+    data: data,
+    options: {
+      legend: {
+        position: 'bottom',
+        onClick: function (e) {
+          e.stopPropagation();
+        }
+      },
+      responsive: true,
+      maintainAspectRatio: false
+    }
+  });
+}
+
+function createGearChart(distance, bestEfforts) {
+  var gears = {}; // Holds Workout Type and its count.
+  bestEfforts.forEach(function(bestEffort) {
+    var gearName = 'n/a';
+    if (bestEffort['gear_name']) {
+      gearName = bestEffort['gear_name'];
+    }
+
+    if (gearName in gears) {
+      gears[gearName] += 1;
+    } else {
+      gears[gearName] = 1;
+    }
+  });
+
+  var ctx = $("#gear-chart").get(0).getContext("2d");
+  ctx.canvas.height = 300;
+
+  var gearLabels = Object.keys(gears);
+  var gearCount = [];
+  for(var key in gears) {
+    var value = gears[key];
+    gearCount.push(value);
+  }
+  var data = {
+      labels: gearLabels,
+      datasets: [
+      {
+          data: gearCount,
+          backgroundColor: [
+              "rgba(189, 214, 186, 0.7)",
+              "rgba(245, 105, 84, 0.7)",
+              "rgba(0, 166, 90, 0.7)",
+              "rgba(243, 156, 18, 0.7)"
+          ],
+          hoverBackgroundColor: [
+              "rgba(189, 214, 186, 1)",
+              "rgba(245, 105, 84, 1)",
+              "rgba(0, 166, 90, 1)",
+              "rgba(243, 156, 18, 1)"
+          ]
+      }]
+  };
+
+  var chart = new Chart(ctx, {
+    type: 'pie',
+    data: data,
+    options: {
+      legend: {
+        position: 'bottom',
+        onClick: function (e) {
+          e.stopPropagation();
+        }
+      },
+      responsive: true,
+      maintainAspectRatio: false
+    }
+  });
 }
 
 /* Create Strava Workout Type badge <span>. Run, Race, Long Run and Workout. */
@@ -268,4 +545,14 @@ String.prototype.toHHMMSS = function() {
 
   var time = hours + ':' + minutes + ':' + seconds;
   return time;
+}
+
+/* Get a random colour. */
+function getRandomColor() {
+  var letters = '0123456789ABCDEF'.split('');
+  var color = '#';
+  for (var i = 0; i < 6; i++ ) {
+      color += letters[Math.floor(Math.random() * 16)];
+  }
+  return color;
 }
