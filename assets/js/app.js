@@ -193,21 +193,21 @@ function constructBestEffortTableHtml(distance, bestEfforts, totalItems, isOverv
 
 /* Create Strava Workout Type badge <span>. Run, Race, Long Run and Workout. */
 function createWorkoutTypeBadge(workoutType) {
-  var badgeColor = "green";
+  var workoutTypeClass = "run light-color-zone";
   var workoutTypeName = "Run";
   if (workoutType === 1) {
-    badgeColor = "red";
+    workoutTypeClass = "race";
     workoutTypeName = "Race";
   }
   if (workoutType === 2) {
-    badgeColor = "olive";
+    workoutTypeClass = "long-run";
     workoutTypeName = "Long Run";
   }
   if (workoutType === 3) {
-    badgeColor = "yellow";
+    workoutTypeClass = "workout";
     workoutTypeName = "Workout";
   }
-  return "<span class='label bg-" + badgeColor + "'>" + workoutTypeName + "</span>";
+  return "<span class='label workout-type-" + workoutTypeClass + "'>" + workoutTypeName + "</span>";
 }
 
 /* Create HR badge <span> based on my reserve HR zones. TODO: Need extend to get custom zones. */
