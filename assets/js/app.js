@@ -1,4 +1,10 @@
 function loadDistanceView(sidebarAnchor) {
+
+  // Set the global configs to synchronous.
+  $.ajaxSetup({
+      async: false
+  });
+
   var distanceText = sidebarAnchor.attr("data-distance-text");
   var distanceName = sidebarAnchor.attr("data-distance-name");
   prepareDistanceView(distanceText, sidebarAnchor);
@@ -23,6 +29,11 @@ function loadDistanceView(sidebarAnchor) {
       });
     });
   }
+
+  // Set JS back to asynchronous mode.
+  $.ajaxSetup({
+      async: true
+  });
 }
 
 function prepareDistanceView(distanceText, sidebarAnchor) {
@@ -129,12 +140,121 @@ function createMainContent(distancesToShow, maxItemsAllowed, isOverview) {
       // and it's one of those distances to be shown on overview page,
       // create the best efforts table for this distance.
       if (bestEffortsForThisDistance.length > 0 && distancesToShow.indexOf(distance) !== -1) {
+        if (!isOverview) {
+          var progressionChart = constructProgressionChartHtml();
+          $('#main-content').append(progressionChart);
+          createProgressionChart(distance, bestEffortsForThisDistance);
+        }
         var table = constructBestEffortTableHtml(distance, bestEffortsForThisDistance, maxItemsAllowed, isOverview);
         $('#main-content').append(table);
       }
     });
-  }).done(function() {
+  });
+}
 
+function constructProgressionChartHtml() {
+  var chart = "<div class='row'><div class='col-xs-12'>"
+  chart += "<div class='box box-primary'>"
+  chart += "<div class='box-header with-border>"
+  chart += "<i class='fa fa-bar-chart-o'></i><h3 class='box-title'>Progression Chart</h3>";
+  chart += "<div class='box-body'>";
+  chart += "<div class='chart'>";
+  chart += "<canvas id='progression-chart'></canvas>";
+  chart += "</div></div></div></div></div>";
+  return chart;
+}
+
+function createProgressionChart(distance, bestEfforts) {
+  var dates = [];
+  var runTimes = [];
+  var runTimeLabels = [];
+
+  bestEfforts.forEach(function(bestEffort) {
+    var date = bestEffort["start_date"].slice(0, 10);
+    var runTime = bestEffort['elapsed_time'];
+    var runTimeLabel = bestEffort["elapsed_time"].toString().toHHMMSS();
+    dates.push(date);
+    runTimes.push(runTime);
+    runTimeLabels.push(runTimeLabel);
+  });
+
+  var ctx = $("#progression-chart").get(0).getContext("2d");
+  ctx.canvas.height = 300;
+
+  var data = {
+    yLabels: runTimeLabels,
+    labels: dates,
+    datasets: [
+      {
+        label: "Best Efforts for "+ distance,
+        fill: false,
+        lineTension: 0,
+        backgroundColor: "rgba(75,192,192,0.4)",
+        borderColor: "#FC4C02",
+        borderCapStyle: 'butt',
+        borderDash: [],
+        borderDashOffset: 0.0,
+        borderJoinStyle: 'miter',
+        pointBorderColor: "#FC4C02",
+        pointBackgroundColor: "#fff",
+        pointBorderWidth: 1,
+        pointHoverRadius: 5,
+        pointHoverBackgroundColor: "#FC4C02",
+        pointHoverBorderColor: "#E34402",
+        pointHoverBorderWidth: 2,
+        pointRadius: 4,
+        pointHitRadius: 10,
+        data: runTimes,
+        spanGaps: false
+      }
+    ]
+  };
+  var myLineChart = new Chart(ctx, {
+    type: 'line',
+    data: data,
+    options: {
+      legend: {
+        display: false
+      },
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        xAxes: [{
+            gridLines: {
+                display: false
+            },
+            type: 'time',
+            time: {
+                unit: 'month'
+            }
+        }],
+        yAxes: [{
+          gridLines: {
+              display: true,
+              offsetGridLines: true
+          },
+          ticks: {
+            callback: function(value, index, values) {
+                return value.toString().toHHMMSS();
+            }
+          }
+        }]
+      },
+      tooltips: {
+        enabled: true,
+        mode: 'single',
+        callbacks: {
+          title: function(tooltipItem, data) {
+            return "Best Effort for " + distance;
+          },
+          label: function(tooltipItem, data) {
+            var text = "Ran " + tooltipItem.yLabel.toString().toHHMMSS();
+            text += " on " + tooltipItem.xLabel;
+            return text;
+          }
+        }
+      }
+    }
   });
 }
 
@@ -162,7 +282,7 @@ function constructBestEffortTableHtml(distance, bestEfforts, maxItemsAllowed, is
   // Take only the fastest three for Overview page.
   bestEfforts.reverse().slice(0, maxItemsAllowed).forEach(function(bestEffort) {
     table += "<tr>";
-    table += "<td>" + bestEffort["start_date"].slice(0, 10); + "</td>";
+    table += "<td>" + bestEffort["start_date"].slice(0, 10) + "</td>";
     table += "<td class='text-center badge-cell'>" + createWorkoutTypeBadge(bestEffort["workout_type"]) + "</td>";
     table += "<td>" + "<a href='https://www.strava.com/activities/" + bestEffort['activity_id'] +
       "' target='_blank'>" + bestEffort['activity_name'] + "</a>" + "</td>";

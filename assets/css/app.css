@@ -12,6 +12,9 @@
 .form-control:focus {
     border-color: #FC4C02;
 }
+.box.box-primary {
+    border-top-color: #FC4C02;
+}
 /* Blue follower and following links. */
 .navbar-nav > .user-menu > .dropdown-menu > .user-body a {
   color: #007FB6 !important;
