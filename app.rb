@@ -8,10 +8,10 @@ require './lib/fetcher/strava_api_client'
 require './lib/helper'
 
 # Create a configuration reader.
-@config = StravaBestEfforts::ConfigReader.new
+config = StravaBestEfforts::ConfigReader.new
 
 # Setup log file and logger.
-$logger = StravaBestEfforts::AppLogger.new(@config.log_level).get
+$logger = StravaBestEfforts::AppLogger.new(config.log_level).get
 
 # Setup options parser.
 ARGV << '-h' if ARGV.empty?
@@ -43,29 +43,28 @@ end
 # Fetching best efforts activities.
 if options[:fetch]
 
-  @api_client = StravaBestEfforts::Fetcher::StravaApiClient.new(@config.access_token)
+  api_client = StravaBestEfforts::Fetcher::StravaApiClient.new(config.access_token)
 
   # Setup the result directory and create athlete JSON writers.
-  @athlete_file = StravaBestEfforts::Helper.get_athlete_file(@config.dir_result)
-  @athlete_writer = StravaBestEfforts::Fetcher::JsonWriter.new(@athlete_file)
+  athlete_file = StravaBestEfforts::Helper.get_athlete_file(config.dir_result)
+  athlete_writer = StravaBestEfforts::Fetcher::JsonWriter.new(athlete_file)
 
   # Setup the result directory and create best efforts JSON writers.
-  @best_efforts_file = StravaBestEfforts::Helper.get_best_efforts_file(@config.dir_result)
-  @best_efforts_writer = StravaBestEfforts::Fetcher::JsonWriter.new(@best_efforts_file)
+  best_efforts_file = StravaBestEfforts::Helper.get_best_efforts_file(config.dir_result)
+  best_efforts_writer = StravaBestEfforts::Fetcher::JsonWriter.new(best_efforts_file)
 
   begin
     # Fetch athlete information.
-    athlete_info = @api_client.get_current_ahtlete_info
-    @athlete_writer.append_results(athlete_info)
+    athlete_info = api_client.get_current_ahtlete_info
+    athlete_writer.append_results(athlete_info)
 
     # For each activity id, retrieve activity json, then parse it.
     # If it has valid best effort items, append them to the result file.
-    @activity_ids = @api_client.get_all_best_effort_activity_ids
-    @activity_ids.sort.each do |activity_id|
-
-      activity_json = @api_client.retrieve_an_activity(activity_id)
-      results = StravaBestEfforts::Fetcher::BestEffortParser.parse(activity_json, @config.maximum_pr_rank)
-      @best_efforts_writer.append_results(results)
+    activity_ids = api_client.get_all_best_effort_activity_ids
+    activity_ids.sort.each do |activity_id|
+      activity_json = api_client.retrieve_an_activity(activity_id)
+      results = StravaBestEfforts::Fetcher::BestEffortParser.parse(activity_json, config.maximum_pr_rank)
+      best_efforts_writer.append_results(results)
     end
 
   rescue Exception => e
@@ -74,12 +73,12 @@ if options[:fetch]
     raise
     exit 1
   ensure
-    @athlete_writer.close
-    @best_efforts_writer.close
+    athlete_writer.close
+    best_efforts_writer.close
 
     # Copy created data JSON files to designated location.
-    FileUtils.cp_r(@athlete_file, './athlete.json', :remove_destination => true) if File.exists?(@athlete_file)
-    FileUtils.cp_r(@best_efforts_file, './best-efforts.json', :remove_destination => true) if File.exists?(@best_efforts_file)
+    FileUtils.cp_r(athlete_file, './athlete.json', :remove_destination => true) if File.exists?(athlete_file)
+    FileUtils.cp_r(best_efforts_file, './best-efforts.json', :remove_destination => true) if File.exists?(best_efforts_file)
 
     $logger.close
   end

@@ -2,67 +2,57 @@ require 'json'
 require 'strava/api/v3'
 
 module StravaBestEfforts
-
   module Fetcher
-
     class StravaApiClient
 
       def initialize(access_token)
         @api_client = Strava::Api::V3::Client.new(:access_token => access_token, :logger => $logger)
       end
 
+      def is_activity_run_and_with_achievements?(activity)
+        activity['type'] == 'Run' and activity['achievement_count'] > 0
+      end
+
       # Get ids of all activities that have achievement items.
       def get_all_best_effort_activity_ids
-        $logger.info("StravaClient - Getting ids for activities with achievement items.")
 
         # Call Strava API to list all athlete activities,
         # then parse out all activity ids.
-        athlete_activities = list_all_athlete_activities
 
         # For all activity ids, choose running activities only,
         # and filter out those without achievement items.
-        activity_ids = []
-        athlete_activities.each do |page|
-          page.each do |activity|
-            activity_json = JSON.parse(activity.to_json)
-            if activity_json['type'] == 'Run' and activity_json['achievement_count'] > 0
-              activity_ids << activity_json['id']
-              $logger.debug("StravaClient - Activity #{activity_json['id']} has achievement items.")
-            end
-          end
-        end
 
+        activity_ids = list_all_athlete_activities.reduce([]) do |acc, act|
+          activity = JSON.parse(act.to_json)
+          if is_activity_run_and_with_achievements?(activity)
+            $logger.debug("StravaClient - Activity #{activity['id']} has achievement items.")
+            acc << activity['id']
+          end
+          acc
+        end
         $logger.info("StravaClient - Total number of #{activity_ids.count} activity ids retrieved.")
-        return activity_ids
+        activity_ids
       end
 
       def get_current_ahtlete_info
-        athlete_info = []
-        $logger.info("StravaClient - Getting current athlete information.")
-        athlete_info << @api_client.retrieve_current_athlete
-        return athlete_info
+        [@api_client.retrieve_current_athlete]
       end
 
       def retrieve_an_activity(activity_id)
         $logger.info("StravaClient - Retrieving activity #{activity_id}.")
-
         raw_activity = @api_client.retrieve_an_activity(activity_id)
-        activity = JSON.parse(raw_activity.to_json)
-        return activity
+        JSON.parse(raw_activity.to_json)
       end
 
       def list_all_athlete_activities
-        # In the format of [ [{},{},{}], [{},{},{}], [{},{},{}] ].
-        athlete_activities = []
-        for i in 1..100 # 100 pages, which can hold up to 20000 activities.
-          new_page = @api_client.list_athlete_activities({:per_page => 200, :page => i})
-          if new_page.empty?
-            break
-          else
-            athlete_activities << new_page
-          end
+        $logger.info("StravaClient - Getting ids for activities with achievement items.")
+
+        athlete_activities = (1..100).reduce([]) do |acc, i|
+          page = @api_client.list_athlete_activities({:per_page => 200, :page => i})
+          acc << page unless page.empty?
+          acc
         end
-        return athlete_activities
+        athlete_activities.flatten
       end
 
       private :list_all_athlete_activities
