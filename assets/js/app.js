@@ -70,63 +70,38 @@ function loadOverview() {
 }
 
 function createAthleteInfo() {
-  $.getJSON('./athlete.json').then(function(data) {
-    // There should only be one record of athlete data.
-    // Get the first one regardless.
-    var allAthleteInfo = [];
-    $.each(data, function(key, value) {
-      allAthleteInfo.push(value);
-    });
-    var athleteInfo = allAthleteInfo[0];
+  $.getJSON('./athlete.json').then(function(athleteInfo) {
+    let athlete = athleteInfo.pop();//useless, need to fix the endpoint to return a single athelte anyway
 
-    // Athlete URL.
-    var athleteUrl = "https://www.strava.com/athletes/" + athleteInfo['id'];
+    let athleteUrl = "https://www.strava.com/athletes/" + athlete['id'];
     $('.athlete-link').attr('href', athleteUrl);
 
-    // Athlete Name.
-    var name = athleteInfo['firstname'] + " " + athleteInfo['lastname'];
+    var name = athlete['firstname'] + " " + athlete['lastname'];
     $('.athlete-name').text(name);
 
-    // Athlete Location.
-    var location = athleteInfo['city'] + ", " + athleteInfo['country'];
+    var location = athlete['city'] + ", " + athlete['country'];
     $('.athlete-location').text(location);
 
-    // Athlete Profile Picture.
-    $('.athlete-image').attr('src', athleteInfo['profile']);
+    $('.athlete-image').attr('src', athlete['profile']);
 
-    // Following.
-    var friend_count = athleteInfo['friend_count'];
-    var followingUrl = athleteUrl + "/follows?type=following";
-    $('.athlete-following').attr('href', followingUrl);
-    $('.athlete-following').text(friend_count);
-
-    // Followers.
-    var follower_count = athleteInfo['follower_count'];
-    var followerUrl = athleteUrl + "/follows?type=followers";
-    $('.athlete-follower').attr('href', followerUrl);
-    $('.athlete-follower').text(follower_count);
+    var followUrl = athleteUrl + "/follows?type=";
+    $('.athlete-following').attr('href', followUrl + "following");
+    $('.athlete-following').text(athlete['friend_count']);
+   
+    $('.athlete-follower').attr('href', followUrl + "followers");
+    $('.athlete-follower').text(athlete['follower_count']);
   });
 }
 
 function createMainContent(distancesToShow, maxItemsAllowed, isOverview) {
-  var allDistances = ['50k', 'Marathon', '30k', 'Half-Marathon', '20k', '10 mile', '15k', '10k', '5k', '2 mile',
-    '1 mile', '1k', '1/2 mile', '400m'
-  ];
+  let allDistances = ['50k', 'Marathon', '30k', 'Half-Marathon', '20k', '10 mile', '15k', '10k', '5k', '2 mile',
+    '1 mile', '1k', '1/2 mile', '400m'];
 
-  // Retrieve and parse data from JSON file.
-  $.getJSON('./best-efforts.json').then(function(data) {
-    var bestEffortsJsonData = [];
-    $.each(data, function(key, value) {
-      bestEffortsJsonData.push(value);
-    });
-
+  $.getJSON('./best-efforts.json').then(function(bestEffortsJsonData) {
     allDistances.forEach(function(distance) {
-      var bestEffortsForThisDistance = [];
-      bestEffortsJsonData.forEach(function(bestEffort) {
-        if (bestEffort['name'] === distance && bestEffort['pr_rank'] === 1) {
-          bestEffortsForThisDistance.push(bestEffort);
-        }
-      });
+      let bestEffortsForThisDistance = bestEffortsJsonData.filter((be) => {
+        return be['name'] === distance && be['pr_rank'] === 1;
+      }); 
 
       // Append the count of best efforts for this distance to treeview links.
       var distanceId = distance.toLowerCase().replace(/ /g, '-').replace(/\//g, '-');
@@ -199,17 +174,16 @@ function constructProgressionChartHtml() {
 
 function createProgressionChart(distance, bestEfforts) {
   var distanceName = distance.replace(/-/g, ' ');
-  var dates = [];
-  var runTimes = [];
-  var runTimeLabels = [];
 
-  bestEfforts.forEach(function(bestEffort) {
-    var date = bestEffort["start_date"].slice(0, 10);
-    var runTime = bestEffort['elapsed_time'];
-    var runTimeLabel = bestEffort["elapsed_time"].toString().toHHMMSS();
-    dates.push(date);
-    runTimes.push(runTime);
-    runTimeLabels.push(runTimeLabel);
+  let dates = bestEfforts.map(function(bestEffort) {
+    return bestEffort["start_date"].slice(0, 10);
+  });
+
+  let runTimes = bestEfforts.map(function(bestEffort) {
+    return bestEffort['elapsed_time'];
+  });
+  let runTimeLabels = bestEfforts.map(function(bestEffort) {
+    return bestEffort["elapsed_time"].toString().toHHMMSS();
   });
 
   var ctx = $("#progression-chart").get(0).getContext("2d");
@@ -348,21 +322,11 @@ function constructBestEffortTableHtml(distance, bestEfforts, maxItemsAllowed, is
 }
 
 function createWorkoutTypeChart(distance, bestEfforts) {
-  var workoutTypes = {}; // Holds Workout Type and its count.
-  bestEfforts.forEach(function(bestEffort) {
-    var workoutType = bestEffort["workout_type"];
-
-    // No workout type is a normal run.
-    if (workoutType == null) {
-      workoutType = 0;
-    }
-
-    if (workoutType in workoutTypes) {
-      workoutTypes[workoutType] += 1;
-    } else {
-      workoutTypes[workoutType] = 1;
-    }
-  });
+    let workoutTypes = bestEfforts.reduce((acc, be) => {
+        let workoutType = be["workout_type"] || 0;
+        acc[workoutType] = acc[workoutType] ?  acc[workoutType] + 1 : 1;
+        return acc;
+    }, {});
 
   var ctx = $("#workout-type-chart").get(0).getContext("2d");
   ctx.canvas.height = 300;

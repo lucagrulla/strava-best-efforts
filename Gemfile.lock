@@ -18,10 +18,11 @@ GEM
       multi_json
 
 PLATFORMS
+  ruby
   x64-mingw32
 
 DEPENDENCIES
   strava-api-v3
 
 BUNDLED WITH
-   1.12.5
+   1.13.1

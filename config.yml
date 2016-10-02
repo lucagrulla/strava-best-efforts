@@ -1,5 +1,5 @@
 # Strava Access Token.
-access_token: replace_with_your_access_token
+access_token: 4d3957783e21427fb353a40067c54ba5e4b10387
 
 # Folder for results files.
 dir_result: history
